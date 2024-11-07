@@ -1,6 +1,7 @@
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
 
 np.set_printoptions(threshold=np.inf)
 file_path = './cifar-10-batches-py/data_batch_1'
@@ -58,10 +59,19 @@ def convolve(images, index, kernal, num_channels):
 
     return output_image
 
-images, labels = load_batches(file_path)
-output_image = convolve(images, index=5, kernal=kernel_matrix, num_channels=3)
-plt.imshow(output_image.astype(np.uint8))
-plt.show()
-#view_matrix(images, index=4)
-#for row in kernel_matrix:
-#    print(row)
+def main(file_path, image_index):
+    images, labels = load_batches(file_path)
+
+    output_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
+    plt.imshow(output_image.astype(np.uint8))
+    plt.title(f"image index:{image_index}")
+    plt.show()   
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="apply sharpening")
+    parser.add_argument("index", type=int, help="Index of the cifar image")
+    args = parser.parse_args()
+
+    file_path = './cifar-10-batches-py/data_batch_1'
+
+    main(file_path, args.index)
