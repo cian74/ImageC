@@ -2,6 +2,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
+np.set_printoptions(threshold=np.inf)
 file_path = './cifar-10-batches-py/data_batch_1'
 kernel_matrix = np.array([[0,-1,0],
                           [-1,5,-1],
@@ -32,28 +33,35 @@ def view_dest_matrix(images, index):
         print(row) 
     
 def zero_padding(images, index, padding_size):
-    return np.pad(images[index], pad_width=padding_size, mode="constant", constant_values=0)
+    return np.pad(images[index], pad_width=((padding_size, padding_size),
+                                            (padding_size, padding_size),
+                                            (0,0)), mode="constant", constant_values=0)
 
 def convolve(images, index, kernal, num_channels):
     output_image = np.zeros((32,32,num_channels))
     padded_image = zero_padding(images, index, 1)
+    kernel_height, kernel_width = kernal.shape
 
-    print(padded_image)
+    for i in range(32):
+        for j in range(32):
+            for c in range(num_channels):
+                acc = 0 
 
-    """ for row in images[index]:
-        for pixel in row:
+                for m in range(kernel_height):
+                    for  n in range(kernel_width): 
+                       padded_i = i + m
+                       padded_j = j + n
 
-            print(pixel)
-            for rbg in num_channels:
+                       acc += kernal[m,n] * padded_image[padded_i, padded_j, c]
 
-                acc = 0
+                       output_image[i,j,c] = np.clip(acc,0,255)
 
-                for kernal_rows in kernal:
-                    for element in kernal_rows: """
-                        
+    return output_image
+
 images, labels = load_batches(file_path)
-convolve(images,index=5,kernal=kernel_matrix, num_channels=3)
+output_image = convolve(images, index=5, kernal=kernel_matrix, num_channels=3)
+plt.imshow(output_image.astype(np.uint8))
+plt.show()
 #view_matrix(images, index=4)
 #for row in kernel_matrix:
 #    print(row)
-#display(images, index=5)
