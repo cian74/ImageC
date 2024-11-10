@@ -56,14 +56,28 @@ def convolve(images, index, kernal, num_channels):
                        acc += kernal[m,n] * padded_image[padded_i, padded_j, c]
 
                        output_image[i,j,c] = np.clip(acc,0,255)
-
     return output_image
+
+
+def max_pooling(output_image, pool_size=2,stride=2):
+    height, width, num_channels = output_image.shape
+    output_height = height // pool_size
+    output_width = width // pool_size
+
+    pooled_image = np.zeros((output_height,output_width,num_channels))
+    for c in range(num_channels):
+        for i in range(0, height - pool_size + 1, stride):
+            for j in range(0, width - pool_size + 1, stride):
+                pooled_image[i // stride, j // stride, c] = np.max(output_image[i:i + pool_size, j:j + pool_size, c])
+    return pooled_image
 
 def main(file_path, image_index):
     images, labels = load_batches(file_path)
 
-    output_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
-    plt.imshow(output_image.astype(np.uint8))
+    convoled_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
+    print(convoled_image.shape)
+    pooled_image = max_pooling(output_image=convoled_image)
+    plt.imshow(pooled_image.astype(np.uint8))
     plt.title(f"image index:{image_index}")
     plt.show()   
 
