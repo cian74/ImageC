@@ -38,6 +38,12 @@ def zero_padding(images, index, padding_size):
                                             (padding_size, padding_size),
                                             (0,0)), mode="constant", constant_values=0)
 
+def relu(image):
+    return np.maximum(0, image)
+
+def flatten(image):
+    return image.flatten()
+
 def convolve(images, index, kernal, num_channels):
     output_image = np.zeros((32,32,num_channels))
     padded_image = zero_padding(images, index, 1)
@@ -58,7 +64,6 @@ def convolve(images, index, kernal, num_channels):
                        output_image[i,j,c] = np.clip(acc,0,255)
     return output_image
 
-
 def max_pooling(output_image, pool_size=2,stride=2):
     height, width, num_channels = output_image.shape
     output_height = height // pool_size
@@ -71,13 +76,21 @@ def max_pooling(output_image, pool_size=2,stride=2):
                 pooled_image[i // stride, j // stride, c] = np.max(output_image[i:i + pool_size, j:j + pool_size, c])
     return pooled_image
 
+def softmax(x):
+    return np.exp(x)/sum(np.exp(x))
+
 def main(file_path, image_index):
     images, labels = load_batches(file_path)
 
     convoled_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
     print(convoled_image.shape)
     pooled_image = max_pooling(output_image=convoled_image)
-    plt.imshow(pooled_image.astype(np.uint8))
+    activated_image = relu(pooled_image)
+    flattened_image = flatten(activated_image)
+    soft_image = softmax(flattened_image)
+    print(soft_image)
+    #plt.imshow(convoled_image.astype(np.uint8))
+    plt.imshow(activated_image.astype(np.uint8))
     plt.title(f"image index:{image_index}")
     plt.show()   
 
