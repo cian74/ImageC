@@ -77,19 +77,28 @@ def max_pooling(output_image, pool_size=2,stride=2):
     return pooled_image
 
 def softmax(x):
-    return np.exp(x)/sum(np.exp(x))
+    exp_x = np.exp(x - np.max(x))
+    return exp_x / exp_x.sum(axis=0)
+
+def dense(input_vector, weights, bias):
+    return np.dot(input_vector, weights) + bias
 
 def main(file_path, image_index):
     images, labels = load_batches(file_path)
-
     convoled_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
     print(convoled_image.shape)
+
     pooled_image = max_pooling(output_image=convoled_image)
     activated_image = relu(pooled_image)
     flattened_image = flatten(activated_image)
-    soft_image = softmax(flattened_image)
-    print(soft_image)
-    #plt.imshow(convoled_image.astype(np.uint8))
+
+    weights = np.random.rand(flattened_image.size, 10) * 0.01
+    bias = np.zeros(10)
+
+    dense_output = dense(flattened_image, weights, bias)
+    output_probs = softmax(dense_output)
+    print(output_probs)
+
     plt.imshow(activated_image.astype(np.uint8))
     plt.title(f"image index:{image_index}")
     plt.show()   
