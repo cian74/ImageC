@@ -8,17 +8,9 @@ file_path = './cifar-10-batches-py/data_batch_1'
 kernel_matrix = np.array([[0,-1,0],
                           [-1,5,-1],
                           [0,-1,0]]) 
-label_classes = {
-     0: "airplane",
-    1: "automobile",
-    2: "bird",
-    3: "cat",
-    4: "deer",
-    5: "dog",
-    6: "frog",
-    7: "horse",
-    8: "ship",
-    9: "truck"
+classes = {
+    'plane', 'car', 'bird', 'cat','deer', 
+    'dog', 'frog', 'horse', 'ship', 'truck'
 }
 
 def unpickle(file_path):
@@ -96,9 +88,8 @@ def softmax(x):
 def dense(input_vector, weights, bias):
     return np.dot(input_vector, weights) + bias
 
-def main(file_path, image_index):
-    images, labels = load_batches(file_path)
-    convoled_image = convolve(images, index=image_index, kernal=kernel_matrix, num_channels=3)
+def forward(images, index, kernal, num_channels):
+    convoled_image = convolve(images, index, kernal, num_channels)
     print(convoled_image.shape)
 
     pooled_image = max_pooling(output_image=convoled_image)
@@ -111,8 +102,13 @@ def main(file_path, image_index):
     dense_output = dense(flattened_image, weights, bias)
     output_probs = softmax(dense_output)
     print(output_probs)
+    
+    return activated_image 
 
-    plt.imshow(activated_image.astype(np.uint8))
+def main(file_path, image_index):
+    images, labels = load_batches(file_path)
+    out_i = forward(images, index=image_index, kernal=kernel_matrix, num_channels=3)
+    plt.imshow(out_i.astype(np.uint8))
     plt.title(f"image index:{image_index}")
     plt.show()   
 
