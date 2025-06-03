@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-from scipy.signal import convolve2d
 
 np.set_printoptions(threshold=np.inf)
 file_path = './cifar-10-batches-py/'
@@ -75,8 +74,26 @@ def convolve(images, index, kernel, num_channels):
     image = zero_padding(images, index, 1)
     output_image = np.zeros((32, 32, num_channels))
     for c in range(num_channels):
-        output_image[:, :, c] = convolve2d(image[:, :, c], kernel, mode='valid', boundary='fill', fillvalue=0)
+        output_image[:, :, c] = convolve2d(image[:, :, c], kernel)
     return np.clip(output_image, 0, 255)
+
+
+def convolve2d(image, kernel):
+    kernel_height, kernel_width = kernel.shape
+    image_height, image_width = image.shape
+
+    # Output dimensions
+    output_height = image_height - kernel_height + 1
+    output_width = image_width - kernel_width + 1
+
+    output = np.zeros((output_height, output_width))
+
+    for i in range(output_height):
+        for j in range(output_width):
+            region = image[i:i+kernel_height, j:j+kernel_width]
+            output[i, j] = np.sum(region * kernel)
+
+    return output
 
 
 def max_pooling(output_image, pool_size=2,stride=2):
@@ -98,31 +115,29 @@ def softmax(x):
 def dense(input_vector, weights, bias):
     return np.dot(input_vector, weights) + bias
 
-def forward(images, index, kernal, num_channels):
-    convoled_image = convolve(images, index, kernal, num_channels)
-    pooled_image = max_pooling(output_image=convoled_image)
-    activated_image = relu(pooled_image)
+def forward(images, index, kernel, num_channels):
+    conv1 = convolve(images, index, kernel, num_channels)
+    pooled1 = max_pooling(conv1)
+    relu1 = relu(pooled1)
 
-    # Apply second conv
-    second_conv = np.zeros_like(activated_image)
-    for i in range(num_channels):
-        second_conv[:,:, i] = convolve2d(activated_image[:,:,i], kernel_matrix, mode="same", boundary="fill", fillvalue=0) 
+    # Pad relu1 before second conv
+    padded_relu1 = np.pad(relu1, ((1, 1), (1, 1), (0, 0)), mode='constant')
+    second_conv = np.zeros_like(relu1)
+    for c in range(num_channels):
+        second_conv[:, :, c] = convolve2d(padded_relu1[:, :, c], kernel)
+    relu2 = relu(second_conv)
+    pooled2 = max_pooling(relu2)
 
-    second_conv = relu(second_conv)
-    second_pooled = max_pooling(second_conv)
-
-    # Normalize here instead
-    second_pooled /= 255.0
-
-    flattened_image = flatten(second_pooled)
+    pooled2 /= 255.0
+    flattened = flatten(pooled2)
 
     global dense_weights
-    if dense_weights.shape != (flattened_image.shape[0], 10):
-        dense_weights = np.random.randn(flattened_image.shape[0], 10) * 0.01
+    if dense_weights.shape != (flattened.shape[0], 10):
+        dense_weights = np.random.randn(flattened.shape[0], 10) * 0.01
 
-    dense_output = dense(flattened_image, dense_weights, dense_biases)
-    output_probs = softmax(dense_output)
-    return output_probs, flattened_image
+    logits = dense(flattened, dense_weights, dense_biases)
+    probs = softmax(logits)
+    return probs, flattened
 
 def backward(flattened_image, output_probs, true_label, learning_rate=0.01):
     global dense_weights, dense_biases
