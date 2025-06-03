@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
+from scipy.signal import convolve2d
+
 np.set_printoptions(threshold=np.inf)
 file_path = './cifar-10-batches-py/'
 kernel_matrix = np.array([[0,-1,0],
@@ -68,8 +70,6 @@ def relu(image):
 
 def flatten(image):
     return image.flatten()
-
-from scipy.signal import convolve2d
 
 def convolve(images, index, kernel, num_channels):
     image = zero_padding(images, index, 1)
